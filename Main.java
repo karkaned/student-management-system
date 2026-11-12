@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -13,14 +14,16 @@ public class Main {
 
         int choice;
         do {
-            System.out.println("\n=== Student Management System ===");
+            System.out.println("\n=== Student Management System - Phase 2 ===");
             System.out.println("1. Add new student");
             System.out.println("2. View all students");
             System.out.println("3. Search student by ID");
             System.out.println("4. Update student details");
             System.out.println("5. Delete student record");
-            System.out.println("6. Exit");
-            System.out.print("Choose an option (1-6): ");
+            System.out.println("6. Sort students by Last Name");
+            System.out.println("7. Sort students by ID");
+            System.out.println("8. Exit");
+            System.out.print("Choose an option (1-8): ");
 
             try {
                 choice = Integer.parseInt(scanner.nextLine());
@@ -45,12 +48,18 @@ public class Main {
                     deleteStudent();
                     break;
                 case 6:
+                    sortStudentsByLastName();
+                    break;
+                case 7:
+                    sortStudentsById();
+                    break;
+                case 8:
                     System.out.println("Exiting program. Goodbye!");
                     break;
                 default:
-                    System.out.println("Invalid choice. Please enter a number from 1 to 6.");
+                    System.out.println("Invalid choice. Please enter a number from 1 to 8.");
             }
-        } while (choice != 6);
+        } while (choice != 8);
     }
 
     private static void addStudent() {
@@ -102,64 +111,94 @@ public class Main {
         System.out.print("Enter ID to search: ");
         String id = scanner.nextLine();
 
+        try {
+            Student found = findStudentById(id);
+            System.out.println("Student found:\n" + found.toDisplayString());
+        } catch (StudentNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static Student findStudentById(String id) throws StudentNotFoundException {
         for (Student s : students) {
             if (s.getStudentId().equalsIgnoreCase(id)) {
-                System.out.println("Student found:\n" + s.toDisplayString());
-                return;
+                return s;
             }
         }
-        System.out.println("Student with ID " + id + " not found.");
+        throw new StudentNotFoundException("Student with ID " + id + " not found.");
     }
 
     private static void updateStudent() {
         System.out.print("Enter ID of the student to update: ");
         String id = scanner.nextLine();
 
-        for (Student s : students) {
-            if (s.getStudentId().equalsIgnoreCase(id)) {
-                System.out.print("Enter new first name (" + s.getFirstName() + "): ");
-                String firstName = scanner.nextLine();
-                if (!firstName.isEmpty())
-                    s.setFirstName(firstName);
+        try {
+            Student s = findStudentById(id);
 
-                System.out.print("Enter new last name (" + s.getLastName() + "): ");
-                String lastName = scanner.nextLine();
-                if (!lastName.isEmpty())
-                    s.setLastName(lastName);
+            System.out.print("Enter new first name (" + s.getFirstName() + "): ");
+            String firstName = scanner.nextLine();
+            if (!firstName.isEmpty())
+                s.setFirstName(firstName);
 
-                System.out.print("Enter new age (" + s.getAge() + "): ");
-                String ageStr = scanner.nextLine();
-                if (!ageStr.isEmpty()) {
-                    try {
-                        s.setAge(Integer.parseInt(ageStr));
-                    } catch (NumberFormatException ignored) {
-                    }
+            System.out.print("Enter new last name (" + s.getLastName() + "): ");
+            String lastName = scanner.nextLine();
+            if (!lastName.isEmpty())
+                s.setLastName(lastName);
+
+            System.out.print("Enter new age (" + s.getAge() + "): ");
+            String ageStr = scanner.nextLine();
+            if (!ageStr.isEmpty()) {
+                try {
+                    s.setAge(Integer.parseInt(ageStr));
+                } catch (NumberFormatException ignored) {
                 }
-
-                System.out.print("Enter new course (" + s.getCourse() + "): ");
-                String course = scanner.nextLine();
-                if (!course.isEmpty())
-                    s.setCourse(course);
-
-                saveToFile();
-                System.out.println("Student details updated successfully!");
-                return;
             }
+
+            System.out.print("Enter new course (" + s.getCourse() + "): ");
+            String course = scanner.nextLine();
+            if (!course.isEmpty())
+                s.setCourse(course);
+
+            saveToFile();
+            System.out.println("Student details updated successfully!");
+
+        } catch (StudentNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
-        System.out.println("Student with this ID not found.");
     }
 
     private static void deleteStudent() {
         System.out.print("Enter ID of the student to delete: ");
         String id = scanner.nextLine();
 
-        boolean removed = students.removeIf(s -> s.getStudentId().equalsIgnoreCase(id));
-        if (removed) {
+        try {
+            Student s = findStudentById(id);
+            students.remove(s);
             saveToFile();
             System.out.println("Student deleted successfully!");
-        } else {
-            System.out.println("Student with this ID not found.");
+        } catch (StudentNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    private static void sortStudentsByLastName() {
+        if (students.isEmpty()) {
+            System.out.println("Student list is empty.");
+            return;
+        }
+        students.sort(Comparator.comparing(Student::getLastName, String.CASE_INSENSITIVE_ORDER));
+        System.out.println("\n--- Students Sorted by Last Name ---");
+        viewStudents();
+    }
+
+    private static void sortStudentsById() {
+        if (students.isEmpty()) {
+            System.out.println("Student list is empty.");
+            return;
+        }
+        students.sort(Comparator.comparing(Student::getStudentId));
+        System.out.println("\n--- Students Sorted by ID ---");
+        viewStudents();
     }
 
     private static void saveToFile() {
