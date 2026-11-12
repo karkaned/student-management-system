@@ -59,7 +59,6 @@ public class Student {
     }
 
     public String toDisplayString() {
-        return "ID: " + studentId + " | Name: " + firstName + " " + lastName + " | Age: " + age + " | Course: "
-                + course;
+        return "ID: " + studentId + " | Name: " + firstName + " " + lastName + " | Age: " + age + " | Course: " + course;
     }
 }
